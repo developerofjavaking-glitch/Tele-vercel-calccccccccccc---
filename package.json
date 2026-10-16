@@ -1,7 +1,7 @@
 {
-  "name": "telegram-calc-bot",
+  "name": "telegram-web-app-bot",
   "version": "1.0.0",
-  "description": "A simple calculator telegram bot for Vercel",
+  "description": "Telegram WebApp Bot for Vercel",
   "main": "api/webhook.js",
   "scripts": {
     "start": "node api/webhook.js"
