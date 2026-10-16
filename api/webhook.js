@@ -38,7 +38,7 @@ bot.start(async (ctx) => {
 
   return ctx.replyWithMarkdown(welcomeMessage, Markup.inlineKeyboard([
     [Markup.button.url('➕ আমাকে আপনার গ্রুপে যুক্ত করুন', `https://t.me/${ctx.botInfo.username}?startgroup=true`)],
-    [Markup.button.url('📢 আপডেট চ্যানেল', 'https://t.me'), Markup.button.url('💬 সাপোর্ট গ্রুপ', 'https://t.me')]
+    [Markup.button.url('📢 আপডেট চ্যানেল', 'https://t.me/Blast_of_Boom'), Markup.button.url('💬 সাপোর্ট গ্রুপ', 'https://t.me/BoomBoomBoomBlast')]
   ]));
 });
 
