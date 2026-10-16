@@ -1,153 +1,52 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tic Tac Toe</title>
-  <!-- Telegram Web App SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: var(--tg-theme-bg-color, #17212b);
-      color: var(--tg-theme-text-color, #ffffff);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 90vh;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    #status {
-      font-size: 1.2rem;
-      margin-bottom: 20px;
-      height: 30px;
-    }
-    .board {
-      display: grid;
-      grid-template-columns: repeat(3, 90px);
-      grid-gap: 10px;
-      justify-content: center;
-    }
-    .cell {
-      width: 90px;
-      height: 90px;
-      background-color: var(--tg-theme-secondary-bg-color, #232e3c);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      font-weight: bold;
-      cursor: pointer;
-      user-select: none;
-    }
-    .cell.x {
-      color: #e53935;
-    }
-    .cell.o {
-      color: #1e88e5;
-    }
-    button {
-      margin-top: 25px;
-      padding: 12px 24px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      background-color: var(--tg-theme-button-color, #5288c1);
-      color: var(--tg-theme-button-text-color, #ffffff);
-      cursor: pointer;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+  body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(1200px 600px at 20% 10%, #a5b4fc 0%, transparent 60%), radial-gradient(1000px 500px at 90% 90%, #f0abfc 0%, transparent 60%), #f8fafc; }
+ .card { background: white; padding: 32px; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.12); text-align: center; width: 360px; }
+  h1 { font-size: 28px; margin-bottom: 6px; }
+ .sub { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+ .status { font-weight: 600; font-size: 18px; margin-bottom: 16px; padding: 10px; border-radius: 12px; background: #f1f5f9; }
+ .status.win { background: #dcfce7; color: #166534; }.status.draw { background: #fef9c3; color: #854d0e; }
+ .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 auto 20px; }
+ .cell { aspect-ratio: 1; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 36px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; }
+ .cell:hover { background: #f1f5f9; transform: scale(1.03); }
+ .cell.x { color: #6366f1; background: #eef2ff; border-color: #c7d2fe; }.cell.o { color: #ec4899; background: #fdf2f8; border-color: #fbcfe8; }
+ .cell.win { background: #dcfce7!important; border-color: #86efac!important; }
+ .controls { display: flex; gap: 10px; }
+  button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; }
+ .restart { background: #0f172a; color: white; }.mode { background: #f1f5f9; color: #334155; }
+ .score { display:flex; justify-content: space-around; margin-top:16px; font-size:14px; color:#64748b; }.score b { color:#0f172a; font-size:16px; display:block; }
+</style>
 </head>
 <body>
-
-  <h1>❌ Tic Tac Toe ⭕</h1>
-  <div id="status">প্লেয়ার X এর পালা</div>
-
-  <div class="board" id="board">
-    <div class="cell" data-index="0"></div>
-    <div class="cell" data-index="1"></div>
-    <div class="cell" data-index="2"></div>
-    <div class="cell" data-index="3"></div>
-    <div class="cell" data-index="4"></div>
-    <div class="cell" data-index="5"></div>
-    <div class="cell" data-index="6"></div>
-    <div class="cell" data-index="7"></div>
-    <div class="cell" data-index="8"></div>
+<div class="card">
+  <h1>Tic Tac Toe</h1>
+  <p class="sub">Tic Tac Toe • 2 Players or vs Computer</p>
+  <div id="status" class="status">Player X's turn</div>
+  <div class="board" id="board"></div>
+  <div class="controls">
+    <button class="restart" onclick="resetGame()">Restart</button>
+    <button class="mode" id="modeBtn" onclick="toggleMode()">vs Friend</button>
   </div>
-
-  <button onclick="resetGame()">নতুন খেলা শুরু করুন</button>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand(); // পুরো স্ক্রিন জুড়ে ওপেন হওয়ার জন্য
-
-    let currentPlayer = 'X';
-    let boardState = Array(9).fill(null);
-    let gameActive = true;
-
-    const winningConditions = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-      [0, 4, 8], [2, 4, 6]             // Diagonals
-    ];
-
-    const statusDisplay = document.getElementById('status');
-    const cells = document.querySelectorAll('.cell');
-
-    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-
-    function handleCellClick(e) {
-      const cell = e.target;
-      const index = parseInt(cell.getAttribute('data-index'));
-
-      if (boardState[index] !== null || !gameActive) return;
-
-      boardState[index] = currentPlayer;
-      cell.textContent = currentPlayer;
-      cell.classList.add(currentPlayer.toLowerCase());
-
-      if (checkWin()) {
-        statusDisplay.textContent = `🎉 প্লেয়ার ${currentPlayer} জিতেছে!`;
-        gameActive = false;
-        tg.HapticFeedback.notificationOccurred('success');
-        return;
-      }
-
-      if (boardState.every(cell => cell !== null)) {
-        statusDisplay.textContent = '🤝 খেলাটি ড্র হয়েছে!';
-        gameActive = false;
-        return;
-      }
-
-      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-      statusDisplay.textContent = `প্লেয়ার ${currentPlayer} এর পালা`;
-      tg.HapticFeedback.selectionChanged();
-    }
-
-    function checkWin() {
-      return winningConditions.some(condition => {
-        return condition.every(index => boardState[index] === currentPlayer);
-      });
-    }
-
-    function resetGame() {
-      currentPlayer = 'X';
-      boardState = Array(9).fill(null);
-      gameActive = true;
-      statusDisplay.textContent = 'প্লেয়ার X এর পালা';
-      cells.forEach(cell => {
-        cell.textContent = '';
-        cell.classList.remove('x', 'o');
-      });
-    }
-  </script>
+  <div class="score"><div><b id="sx">0</b>Player X</div><div><b id="sd">0</b>Draws</div><div><b id="so">0</b>Player O</div></div>
+</div>
+<script>
+const boardEl=document.getElementById('board'),statusEl=document.getElementById('status');let board=Array(9).fill(''),current='X',gameActive=true,vsComputer=false,scores={X:0,O:0,D:0};const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+function createBoard(){boardEl.innerHTML='';board.forEach((_,i)=>{const cell=document.createElement('div');cell.className='cell';cell.addEventListener('click',()=>handleMove(i));boardEl.appendChild(cell);});}
+function handleMove(i){if(board[i]!==''||!gameActive)return;makeMove(i,current);if(!gameActive)return;if(vsComputer&&current==='O')setTimeout(computerMove,400);}
+function makeMove(i,player){board[i]=player;const cell=boardEl.children[i];cell.textContent=player;cell.classList.add(player.toLowerCase());const result=checkResult();if(result){gameActive=false;if(result.winner){statusEl.textContent=`Player ${result.winner} Wins! 🎉`;statusEl.className='status win';result.line.forEach(idx=>boardEl.children[idx].classList.add('win'));scores[result.winner]++;}else{statusEl.textContent=`It's a Draw! 🤝`;statusEl.className='status draw';scores.D++;}updateScore();}else{current=current==='X'?'O':'X';statusEl.textContent=`Player ${current}'s turn`;}}
+function checkResult(){for(let line of wins){const[a,b,c]=line;if(board[a]&&board[a]===board[b]&&board[a]===board[c])return{winner:board[a],line};}if(!board.includes(''))return{winner:null};return null;}
+function computerMove(){if(!gameActive)return;let move=findBestMove();makeMove(move,'O');}
+function findBestMove(){for(let i=0;i<9;i++)if(board[i]===''){board[i]='O';if(checkResult()?.winner==='O'){board[i]='';return i;}board[i]='';}for(let i=0;i<9;i++)if(board[i]===''){board[i]='X';if(checkResult()?.winner==='X'){board[i]='';return i;}board[i]='';}if(board[4]==='')return 4;const corners=[0,2,6,8].filter(i=>board[i]==='');if(corners.length)return corners[Math.floor(Math.random()*corners.length)];const empties=board.map((v,i)=>v===''? i : null).filter(v=>v!==null);return empties[Math.floor(Math.random()*empties.length)];}
+function resetGame(){board=Array(9).fill('');current='X';gameActive=true;statusEl.textContent=`Player ${current}'s turn`;statusEl.className='status';createBoard();}
+function toggleMode(){vsComputer=!vsComputer;document.getElementById('modeBtn').textContent=vsComputer?'vs Computer':'vs Friend';resetGame();}
+function updateScore(){document.getElementById('sx').textContent=scores.X;document.getElementById('so').textContent=scores.O;document.getElementById('sd').textContent=scores.D;}
+createBoard();
+</script>
 </body>
 </html>
