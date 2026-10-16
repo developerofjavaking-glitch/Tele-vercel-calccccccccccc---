@@ -11,7 +11,7 @@ const pornKeywords = [
 // লিংক চেনার জন্য রেগুলার এক্সপ্রেশন
 const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9][-a-zA-Z0-9]*\.[a-zA-Z]{2,}[^\s]*)/gi;
 
-// 🌟 প্রিমিয়াম স্টার্ট/ওয়েলকাম মেসেজ
+// প্রিমিয়াম স্টার্ট/ওয়েলকাম মেসেজ
 bot.start(async (ctx) => {
   const userName = ctx.from.first_name || 'User';
   
@@ -28,17 +28,10 @@ bot.start(async (ctx) => {
 🚫 **অটোমেটিক লিংক রিমুভার:** গ্রুপে মেম্বারদের পাঠানো সকল লিংক সাথে সাথে ডিলিট করে দেয়।
 🔞 **পর্ন লিংক ফিল্টার:** কোনো অ্যাডাল্ট লিংক দিলে সাথে সাথে ডিলিট এবং ওই মেম্বারকে **১ মিনিটের জন্য মিউট** করে দেয়।
 👑 **অ্যাডমিন সুরক্ষা:** গ্রুপের Owner বা Admin-দের কোনো মেসেজ ফিল্টার বা ডিলিট করা হয় না।
-
----
-
-💡 **কীভাবে সেটআপ করবেন?**
-১. আপনার গ্রুপে আমাকে **Admin** হিসেবে যুক্ত করুন।
-২. **Delete Messages** এবং **Restrict Members** পারমিশন দিন।
   `;
 
   return ctx.replyWithMarkdown(welcomeMessage, Markup.inlineKeyboard([
-    [Markup.button.url('➕ আমাকে আপনার গ্রুপে যুক্ত করুন', `https://t.me/${ctx.botInfo.username}?startgroup=true`)],
-    [Markup.button.url('📢 আপডেট চ্যানেল', 'https://t.me/Blast_of_Boom'), Markup.button.url('💬 সাপোর্ট গ্রুপ', 'https://t.me/BoomBoomBoomBlast')]
+    [Markup.button.url('➕ আমাকে আপনার গ্রুপে যুক্ত করুন', `https://t.me/${ctx.botInfo.username}?startgroup=true`)]
   ]));
 });
 
@@ -50,28 +43,33 @@ bot.on('message', async (ctx) => {
     }
 
     const message = ctx.message;
-    const text = message.text || message.caption || '';
     const user = message.from;
 
     if (!user) return;
 
-    // ১. Admin/Owner চেক
-    const member = await ctx.telegram.getChatMember(ctx.chat.id, user.id);
-    const isAdmin = member.status === 'creator' || member.status === 'administrator';
+    // 👑 ১. সবার আগে সেন্ড করার ব্যক্তি Admin কি না তা চেক করা
+    try {
+      const member = await ctx.telegram.getChatMember(ctx.chat.id, user.id);
+      const isAdmin = member.status === 'creator' || member.status === 'administrator';
 
-    if (isAdmin) {
-      return;
+      // যদি সেন্ডকারী Admin বা Owner হন, তবে বট এই মেসেজটি সম্পূর্ণ ইগনোর করবে (কোনো চেক বা প্রসেস করবে না)
+      if (isAdmin) {
+        return;
+      }
+    } catch (err) {
+      console.error('Admin check error:', err);
     }
 
-    // ২. লিংক ডিটেকশন
+    // ২. সাধারণ মেম্বারদের মেসেজ চেক করা
+    const text = message.text || message.caption || '';
     const hasLink = urlRegex.test(text) || (message.entities && message.entities.some(e => e.type === 'url' || e.type === 'text_link'));
 
     if (hasLink) {
-      // ৩. পর্ন লিংক চেক
       const lowerText = text.toLowerCase();
       const isPornLink = pornKeywords.some(keyword => lowerText.includes(keyword));
 
       if (isPornLink) {
+        // পর্ন লিংক হলে ডিলিট এবং মিউট
         await ctx.deleteMessage(message.message_id).catch(() => {});
 
         const muteDuration = 60; // ১ মিনিট
@@ -92,7 +90,7 @@ bot.on('message', async (ctx) => {
         await ctx.reply(`${mentionName}, 🚫 **অ্যাডাল্ট/নিষিদ্ধ লিংক শেয়ার করার কারণে আপনাকে ১ মিনিটের জন্য মিউট করা হয়েছে।**`, { parse_mode: 'Markdown' });
 
       } else {
-        // সাধারণ লিংক ডিলিট
+        // সাধারণ লিংক হলে শুধু ডিলিট
         await ctx.deleteMessage(message.message_id).catch(() => {});
       }
     }
